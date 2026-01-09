@@ -366,17 +366,30 @@ class AIAnalyzer:
         for url in urls:
             url_lower = url.lower()
             
-            if 'github.com' in url_lower:
-                categories['github'].append(url)
-            elif 'youtube.com' in url_lower or 'youtu.be' in url_lower:
-                categories['videos'].append(url)
-            elif 'arxiv.org' in url_lower or 'paper' in url_lower:
-                categories['papers'].append(url)
-            elif any(doc in url_lower for doc in ['docs.', 'documentation', 'readme']):
-                categories['documentation'].append(url)
-            elif any(ext in url_lower for ext in ['blog', 'article', 'post', 'medium.com']):
-                categories['articles'].append(url)
-            else:
+            # Use domain extraction for precise categorization
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(url_lower)
+                domain = parsed.netloc.lower()
+                path = parsed.path.lower()
+                
+                # Check exact domain or subdomain
+                if domain == 'github.com' or domain.endswith('.github.com'):
+                    categories['github'].append(url)
+                elif domain in ['youtube.com', 'www.youtube.com', 'youtu.be', 'm.youtube.com']:
+                    categories['videos'].append(url)
+                elif domain == 'arxiv.org' or domain.endswith('.arxiv.org'):
+                    categories['papers'].append(url)
+                elif 'paper' in path or 'paper' in domain:
+                    categories['papers'].append(url)
+                elif 'docs' in domain or 'documentation' in path or 'readme' in path:
+                    categories['documentation'].append(url)
+                elif 'blog' in path or 'article' in path or 'post' in path or domain == 'medium.com' or domain.endswith('.medium.com'):
+                    categories['articles'].append(url)
+                else:
+                    categories['other'].append(url)
+            except Exception:
+                # Fallback if URL parsing fails
                 categories['other'].append(url)
         
         # Remove duplicates and limit
